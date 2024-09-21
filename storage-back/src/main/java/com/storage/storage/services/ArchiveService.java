@@ -1,6 +1,8 @@
 package com.storage.storage.services;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,6 +11,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -45,20 +49,52 @@ public class ArchiveService {
 
 
     public byte[] download(String id) {
-        File folder = new File(rootPath+"\\"+id);
-        if (folder.exists()) {
+    System.out.println("download no arquivo ===================");
+    System.out.println(rootPath + File.separator + id);
+    
+    File folder = new File(rootPath + File.separator + id);
+    
+    if (folder.exists() && folder.isDirectory()) {
+        // Criação de um arquivo ZIP temporário
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        
+        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
             File[] files = folder.listFiles();
-            if (files.length > 0) {
-                try {
-                    return Files.readAllBytes(files[0].toPath());
-                } catch (IOException e) {
-                    System.out.println(e.getMessage());
-                    return null;
+            
+            // Verifica se há arquivos no diretório e se o array não é nulo
+            if (files != null && files.length > 0) {
+                for (File file : files) {
+                    // Adiciona cada arquivo ao ZIP
+                    if (file.isFile()) {
+                        try (FileInputStream fis = new FileInputStream(file)) {
+                            ZipEntry zipEntry = new ZipEntry(file.getName());
+                            zos.putNextEntry(zipEntry);
+                            
+                            byte[] buffer = new byte[1024];
+                            int length;
+                            while ((length = fis.read(buffer)) >= 0) {
+                                zos.write(buffer, 0, length);
+                            }
+                            zos.closeEntry();
+                        }
+                    }
                 }
+            } else {
+                System.out.println("Nenhum arquivo encontrado no diretório.");
+                return null;
             }
+        } catch (IOException e) {
+            System.out.println("Erro ao criar o ZIP: " + e.getMessage());
+            return null;
         }
+        
+        // Retorna o conteúdo do ZIP
+        return baos.toByteArray();
+    } else {
+        System.out.println("Diretório não encontrado ou não é um diretório válido.");
         return null;
     }
+}
 
     public ArchiveDTO newFolder(){
         String id = UUID.randomUUID().toString();

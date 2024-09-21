@@ -21,12 +21,15 @@ class UploadFilesService {
     }
 
     getFiles(id) {
-        return http.get(`/storage/${id}`);
+        return http.get(`/storage/file/${id}`);
     }
 
     download(id) {
-        return http.get(`/storage/${id}`);
+        return http.get(`/storage/download/${id}`, {
+            responseType: 'blob' // Define o tipo de resposta como 'blob' para arquivos binários
+        });
     }
+    
 
 }
 

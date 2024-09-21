@@ -53,7 +53,7 @@ function App() {
 
   const uploadFiles = () => {
     const files = selectedFiles;
-    
+
     setBtLoanding(true);
     UploadService.newUpload().then((response) => {
       for (let i = 0; i < files.length; i++) {
@@ -76,7 +76,7 @@ function App() {
     }).then((response) => {
       _progressInfos[idx].percentage = 100;
       setProgressInfos(_progressInfos);
-      
+
 
       let noCompleted = _progressInfos.filter((item) => item.percentage < 100);
 
@@ -93,30 +93,42 @@ function App() {
     }).catch(() => {
       _progressInfos[idx].percentage = 0;
       setProgressInfos(_progressInfos);
-      
+
     });
   }
 
   const download = () => {
-    //download file com react
-    
-    UploadService.download(idFile).then((response) => {
-      let files = response.data;
-      for (let i = 0; i < files.length; i++) {
-        downloadFile(files[i], files[i].name);
-      }
-    }
-    )
+    // Faz a chamada para o serviço de download
+    UploadService.download(idFile)
+      .then((response) => {
+        // O arquivo ZIP vem como um blob, que é um tipo binário
+        const file = response.data;
+        const fileName = "downloaded_files.zip";
 
+        // Chama a função para salvar o arquivo no disco
+        downloadFile(file, fileName);
+      })
+      .catch((error) => {
+        console.error("Erro ao fazer o download do arquivo:", error);
+      });
+  };
 
+  const downloadFile = (file, fileName) => {
+    // Cria uma URL temporária para o arquivo recebido
+    const blob = new Blob([file], { type: "application/zip" });
+    const url = window.URL.createObjectURL(blob);
 
-  }
+    // Cria um link para simular o clique no download
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName; // Define o nome do arquivo
 
-  const downloadFile = (file, name) => {
+    // Simula o clique para baixar o arquivo
+    a.click();
 
-
-
-  }
+    // Libera a URL criada anteriormente
+    window.URL.revokeObjectURL(url);
+  };
 
   const handleIdFile = (event) => {
     setIdFile(event.target.value);
@@ -160,7 +172,7 @@ function App() {
       </Paper>
 
       {
-       
+
         <Alert severity={alert.severity} title={alert.title} > {alert.message} </Alert>
       }
 

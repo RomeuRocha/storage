@@ -3,6 +3,7 @@ package com.storage.storage.controllers;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,16 +37,25 @@ public class ArchiveController {
         return dto;
     }
 
-    @GetMapping(value = "/{id}")
-    public List<ArchiveDTO> getFiles(@PathVariable String id) {
-        List<ArchiveDTO> files = storageService.getFiles(id);
-        return files;
+    @GetMapping(value = "/download/{id}")
+    public ResponseEntity<byte[]> download(@PathVariable String id) {
+        byte[] zipFile = storageService.download(id);
+
+        if (zipFile == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"" + id + ".zip\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(zipFile);
     }
 
-    @GetMapping(value = "/{id}/download")
-    public ResponseEntity<byte[]> download(@PathVariable String id) {
-        byte[] file = storageService.download(id);
-        return ResponseEntity.ok(file);
+    @GetMapping(value = "/file/{id}")
+    public List<ArchiveDTO> getFiles(@PathVariable String id) {
+        System.out.println("está vindo aqui ?");
+        List<ArchiveDTO> files = storageService.getFiles(id);
+        return files;
     }
 
 }
